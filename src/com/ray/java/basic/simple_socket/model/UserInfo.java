@@ -1,13 +1,13 @@
-package com.ray.java.basic.simple_socket;
+package com.ray.java.basic.simple_socket.model;
 
 /**
  * Created by dangdang on 5/18/16.
  */
-public class ConnectionUser {
+public class UserInfo {
 
     private String userMac;
 
-    public ConnectionUser(String userMac) {
+    public UserInfo(String userMac) {
         this.userMac = userMac;
     }
 
@@ -18,4 +18,5 @@ public class ConnectionUser {
     public void setUserMac(String userMac) {
         this.userMac = userMac;
     }
+
 }

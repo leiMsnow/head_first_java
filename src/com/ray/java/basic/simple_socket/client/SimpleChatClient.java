@@ -1,16 +1,24 @@
-package com.ray.java.basic.simple_socket;
+package com.ray.java.basic.simple_socket.client;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.ray.java.basic.simple_socket.model.MessageBody;
+import com.ray.java.basic.simple_socket.model.MessageInfo;
+import com.ray.java.basic.simple_socket.model.UserInfo;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
 /**
@@ -20,6 +28,7 @@ public class SimpleChatClient {
 
     JTextArea incoming;
     JTextField outgoing;
+    JList<String> jList;
 
     BufferedReader reader;
     PrintWriter writer;
@@ -27,6 +36,8 @@ public class SimpleChatClient {
     Socket socket;
 
     String userMac;
+
+    String selectUser;
 
     public static void main(String[] args) {
         SimpleChatClient simpleChatClientA = new SimpleChatClient();
@@ -49,17 +60,31 @@ public class SimpleChatClient {
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        outgoing = new JTextField(20);
+        jList = new JList<>();
 
+        jList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JList src;
+                if (e.getClickCount() == 1) {
+                    src = (JList<?>) e.getSource();
+                    selectUser = src.getSelectedValue().toString();
+                    System.out.println("selected: " + selectUser);
+                }
+            }
+        });
+
+        outgoing = new JTextField(20);
         JButton sendButton = new JButton("send");
         sendButton.addActionListener(new SendButtonListener());
 
+        mainPanel.add(jList);
         mainPanel.add(scrollPane);
         mainPanel.add(outgoing);
         mainPanel.add(sendButton);
 
         frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
-        frame.setSize(400, 500);
+        frame.setSize(650, 350);
         frame.setVisible(true);
 
         setUpNetworking();
@@ -87,13 +112,21 @@ public class SimpleChatClient {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                Message json = new Message();
-                json.setUserMac(userMac);
-                json.setMessageContent(outgoing.getText());
-                json.setDate(System.currentTimeMillis());
-                Gson gson = new Gson();
-                writer.println(gson.toJson(json));
-                writer.flush();
+
+                if (selectUser != null) {
+                    MessageInfo messageInfo = new MessageInfo();
+                    messageInfo.setSendUserMac(userMac);
+                    messageInfo.setReceiveUserMac(selectUser);
+                    messageInfo.setMessageContent(outgoing.getText());
+                    messageInfo.setDate(System.currentTimeMillis());
+
+                    MessageBody messageBody = new MessageBody();
+                    messageBody.setBodyType(MessageBody.MESSAGE_INFO);
+                    messageBody.setMessage(messageInfo);
+
+                    writer.println(new Gson().toJson(messageBody));
+                    writer.flush();
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -111,8 +144,30 @@ public class SimpleChatClient {
             try {
                 while ((message = reader.readLine()) != null) {
                     System.out.println(message);
-                    incoming.setText(incoming.getText() + (message + "\n"));
+                    MessageBody messageBody = new Gson().fromJson(message,
+                            MessageBody.class);
+                    MessageInfo messageInfo = messageBody.getMessage();
+                    if (messageBody.getBodyType() == MessageBody.USER_INFO) {
+                        ArrayList<UserInfo> users = new Gson().fromJson(messageInfo.getMessageContent(),
+                                new TypeToken<ArrayList<UserInfo>>() {
+                                }.getType());
+                        String[] userMacs = new String[users.size() - 1];
+                        int index = 0;
+                        Iterator it = users.iterator();
+                        while (it.hasNext()) {
+                            UserInfo userInfo = ((UserInfo) it.next());
+                            if (!userInfo.getUserMac().equals(userMac)) {
+                                userMacs[index] = userInfo.getUserMac();
+                                index++;
+                            }
+                        }
+                        jList.setListData(userMacs);
+                    } else {
+                        incoming.setText(incoming.getText() + (
+                                messageInfo.getSendUserMac() + " said: " + messageInfo.getMessageContent() + "\n"));
+                    }
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
