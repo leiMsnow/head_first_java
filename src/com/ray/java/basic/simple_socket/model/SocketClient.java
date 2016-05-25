@@ -9,14 +9,14 @@ import java.net.Socket;
  */
 public class SocketClient {
 
-    private String clientMac;
+    private UserInfo clientMac;
     private Socket socket;
     private boolean isAlive;
     private long firstTime;
     private long lastTime;
     private PrintWriter writer;
 
-    public SocketClient(String clientMac, Socket socket) {
+    public SocketClient(UserInfo clientMac, Socket socket) {
         this.clientMac = clientMac;
         this.socket = socket;
         this.isAlive = true;
@@ -36,13 +36,21 @@ public class SocketClient {
         this.writer = writer;
     }
 
-    public String getClientMac() {
+    public UserInfo getClientMac() {
         return clientMac;
     }
 
-    public void setClientMac(String clientMac) {
+    public void setClientMac(UserInfo clientMac) {
         this.clientMac = clientMac;
     }
+
+    //    public String getClientMac() {
+//        return clientMac;
+//    }
+//
+//    public void setClientMac(String clientMac) {
+//        this.clientMac = clientMac;
+//    }
 
     public Socket getSocket() {
         return socket;

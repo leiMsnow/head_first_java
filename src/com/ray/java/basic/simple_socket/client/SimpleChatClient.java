@@ -18,7 +18,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Random;
 
 /**
@@ -35,9 +34,9 @@ public class SimpleChatClient {
 
     Socket socket;
 
-    String userMac;
-
-    String selectUser;
+    UserInfo userInfo;
+    ArrayList<UserInfo> users;
+    UserInfo selectUser;
 
     public static void main(String[] args) {
         SimpleChatClient simpleChatClientA = new SimpleChatClient();
@@ -46,7 +45,9 @@ public class SimpleChatClient {
 
     public void go() {
 
-        userMac = getRandomMacAddress();
+        userInfo = new UserInfo("b3:53:f8:68:ad:a7", "张雷雷的电脑",
+                "http://img.woyaogexing.com/touxiang/katong/20140319/3be17ad440da08c1!200x200.jpg");
+        //getRandomMacAddress();
 
         JFrame frame = new JFrame("Simple Chat Client");
         JPanel mainPanel = new JPanel();
@@ -68,8 +69,15 @@ public class SimpleChatClient {
                 JList src;
                 if (e.getClickCount() == 1) {
                     src = (JList<?>) e.getSource();
-                    selectUser = src.getSelectedValue().toString();
-                    System.out.println("selected: " + selectUser);
+                    if (selectUser == null) {
+                        selectUser = users.get(src.getSelectedIndex());
+                        incoming.setText(incoming.getText() + ("--------------切换到与" +
+                                selectUser.getName() + "的聊天--------------\n"));
+                    } else if (!users.get(src.getSelectedIndex()).equals(selectUser)) {
+                        selectUser = users.get(src.getSelectedIndex());
+                        incoming.setText(incoming.getText() + ("--------------切换到与" +
+                                selectUser.getName() + "的聊天--------------\n"));
+                    }
                 }
             }
         });
@@ -87,20 +95,23 @@ public class SimpleChatClient {
         frame.setSize(650, 350);
         frame.setVisible(true);
 
-        setUpNetworking();
-        Thread readerThread = new Thread(new ReaderThread());
-        readerThread.start();
+        connection();
+
     }
 
-    private void setUpNetworking() {
+    private void connection() {
 
         try {
             socket = new Socket("127.0.0.1", 5555);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream());
 
-            writer.println("[userMac]" + userMac);
+            String loginInfo = new Gson().toJson(userInfo);
+            writer.println("[userMac]" + loginInfo);
             writer.flush();
+
+            Thread readerThread = new Thread(new ReaderThread());
+            readerThread.start();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -113,20 +124,26 @@ public class SimpleChatClient {
         public void actionPerformed(ActionEvent e) {
             try {
 
+                MessageInfo messageInfo = new MessageInfo();
+                messageInfo.setSendUserMac(userInfo);
+                messageInfo.setReceiveUserMac(selectUser);
+                messageInfo.setMessageContent(outgoing.getText());
+                messageInfo.setDate(System.currentTimeMillis());
+
+                MessageBody<MessageInfo> messageBody = new MessageBody<>();
+                messageBody.setBodyType(MessageBody.MESSAGE_INFO);
+                messageBody.setMessage(messageInfo);
+
+                String sendMessage = new Gson().toJson(messageBody);
                 if (selectUser != null) {
-                    MessageInfo messageInfo = new MessageInfo();
-                    messageInfo.setSendUserMac(userMac);
-                    messageInfo.setReceiveUserMac(selectUser);
-                    messageInfo.setMessageContent(outgoing.getText());
-                    messageInfo.setDate(System.currentTimeMillis());
-
-                    MessageBody messageBody = new MessageBody();
-                    messageBody.setBodyType(MessageBody.MESSAGE_INFO);
-                    messageBody.setMessage(messageInfo);
-
-                    writer.println(new Gson().toJson(messageBody));
+                    writer.println(sendMessage);
                     writer.flush();
+                    incoming.setText(incoming.getText() + ("me said: " + messageInfo.getMessageContent() + "\n"));
+                } else {
+                    System.out.println("not select user ");
                 }
+                System.out.println("message: " + sendMessage);
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -143,28 +160,36 @@ public class SimpleChatClient {
             String message;
             try {
                 while ((message = reader.readLine()) != null) {
-                    System.out.println(message);
-                    MessageBody messageBody = new Gson().fromJson(message,
+                    System.out.println("receiveMessage: " + message);
+
+                    MessageBody messageJson = new Gson().fromJson(message,
                             MessageBody.class);
-                    MessageInfo messageInfo = messageBody.getMessage();
-                    if (messageBody.getBodyType() == MessageBody.USER_INFO) {
-                        ArrayList<UserInfo> users = new Gson().fromJson(messageInfo.getMessageContent(),
-                                new TypeToken<ArrayList<UserInfo>>() {
+
+                    if (messageJson.getBodyType() == MessageBody.USER_INFO) {
+
+                        MessageBody<ArrayList<UserInfo>> messageBody = new Gson().fromJson(message,
+                                new TypeToken<MessageBody<ArrayList<UserInfo>>>() {
                                 }.getType());
-                        String[] userMacs = new String[users.size() - 1];
+
+                        users = messageBody.getMessage();
+
+                        String[] userMacs = new String[users.size()];
                         int index = 0;
-                        Iterator it = users.iterator();
-                        while (it.hasNext()) {
-                            UserInfo userInfo = ((UserInfo) it.next());
-                            if (!userInfo.getUserMac().equals(userMac)) {
-                                userMacs[index] = userInfo.getUserMac();
-                                index++;
-                            }
+                        for (Object user : users) {
+                            UserInfo userInfo = (UserInfo) user;
+                            userMacs[index] = userInfo.getName();
+                            index++;
                         }
                         jList.setListData(userMacs);
                     } else {
+                        MessageBody<MessageInfo> messageBody = new Gson().fromJson(message,
+                                new TypeToken<MessageBody<MessageInfo>>() {
+                                }.getType());
+
+                        MessageInfo messageInfo = messageBody.getMessage();
+
                         incoming.setText(incoming.getText() + (
-                                messageInfo.getSendUserMac() + " said: " + messageInfo.getMessageContent() + "\n"));
+                                messageInfo.getSendUserMac().getName() + " said: " + messageInfo.getMessageContent() + "\n"));
                     }
                 }
 

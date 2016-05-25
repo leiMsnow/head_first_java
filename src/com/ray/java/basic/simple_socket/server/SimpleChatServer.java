@@ -31,16 +31,16 @@ public class SimpleChatServer {
 
         public ClientHandler(Socket clientSocket) {
 
-            System.out.print("add clients to collections: ");
             try {
                 this.socket = clientSocket;
                 InputStreamReader isReader = new InputStreamReader(socket.getInputStream());
                 reader = new BufferedReader(isReader);
                 String message = reader.readLine();
                 if (message.contains("[userMac]")) {
-                    String userMac = message.replace("[userMac]", "");
-                    socketClients.put(userMac, new SocketClient(userMac, this.socket));
-                    System.out.println("userMac: " + userMac);
+                    System.out.print("add clients to collections: ");
+                    message = message.replace("[userMac]", "");
+                    UserInfo userInfo = new Gson().fromJson(message, UserInfo.class);
+                    socketClients.put(userInfo.getUserMac(), new SocketClient(userInfo, this.socket));
                     sendConnectionMessage();
                 }
             } catch (IOException e) {
@@ -83,34 +83,32 @@ public class SimpleChatServer {
 
     private void sendConnectionMessage() {
 
-        MessageBody messageBody = new MessageBody();
+        MessageBody<ArrayList<UserInfo>> messageBody = new MessageBody<>();
 
         ArrayList<UserInfo> users = new ArrayList<>();
         for (Object o : socketClients.entrySet()) {
             Map.Entry element = (Map.Entry) o;
-            String userMac = element.getKey().toString();
-            users.add(new UserInfo(userMac));
+            UserInfo userInfo = socketClients.get(element.getKey().toString()).getClientMac();
+            users.add(userInfo);
         }
-        MessageInfo messageInfo = new MessageInfo();
-        messageInfo.setMessageContent(new Gson().toJson(users));
-        messageInfo.setDate(System.currentTimeMillis());
-        messageBody.setBodyType(MessageBody.USER_INFO);
-        messageBody.setMessage(messageInfo);
-
+        messageBody.setMessage(users);
         for (Object o : socketClients.values()) {
             SocketClient client = (SocketClient) o;
-            client.getWriter().println(new Gson().toJson(messageBody));
+            String message = new Gson().toJson(messageBody);
+            client.getWriter().println(message);
             client.getWriter().flush();
+
+            System.out.printf("%s: %s\n", client.getClientMac().getName(), message);
         }
     }
 
     private void parseMessage(String message) {
 
-        MessageBody messageBody = new Gson().fromJson(message,
-                new TypeToken<MessageBody>() {
+        System.out.println("parseMessage: " + message);
+        MessageBody<MessageInfo> messageBody = new Gson().fromJson(message,
+                new TypeToken<MessageBody<MessageInfo>>() {
                 }.getType());
 
-        System.out.println("parseMessage: " + message);
         MessageInfo messageInfo = messageBody.getMessage();
         for (Object o : socketClients.values()) {
             SocketClient client = (SocketClient) o;

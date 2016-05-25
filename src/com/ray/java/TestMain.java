@@ -36,7 +36,16 @@ public class TestMain {
         System.out.println(getRandomMacAddress());
 
         Date today = new Date();
-        System.out.println(String.format("%ta,%<tb,%<tD",today));
+        System.out.println(String.format("%ta,%<tb,%<tD", today));
+
+        int x = 10;
+        x = ~x;
+        System.out.println("x: " + x);
+        int y = 6;
+        int a = x | y;
+        System.out.println("a: " + a);
+        y = 10 >> 2;
+        System.out.println("y: " + y);
 
     }
 

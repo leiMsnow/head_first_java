@@ -3,13 +3,13 @@ package com.ray.java.basic.simple_socket.model;
 /**
  * Created by dangdang on 5/18/16.
  */
-public class MessageBody {
+public class MessageBody<T> {
 
     public static final int USER_INFO = 0;
     public static final int MESSAGE_INFO = 1;
 
     private int bodyType;
-    private MessageInfo message;
+    private T message;
 
     public int getBodyType() {
         return bodyType;
@@ -19,12 +19,11 @@ public class MessageBody {
         this.bodyType = bodyType;
     }
 
-    public MessageInfo getMessage() {
+    public T getMessage() {
         return message;
     }
 
-    public void setMessage(MessageInfo message) {
+    public void setMessage(T message) {
         this.message = message;
     }
-
 }
