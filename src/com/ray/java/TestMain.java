@@ -1,14 +1,22 @@
 package com.ray.java;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Scanner;
+import com.ray.java.basic.simple_clone.Person;
+
+import java.util.*;
 
 /**
  * Created by dangdang on 5/9/16.
  */
 public class TestMain {
+
+    private int hhh = 0;
+
+    class InnerClass {
+
+        public InnerClass() {
+            hhh = 1;
+        }
+    }
 
     public static void main(String[] args) {
 
@@ -48,7 +56,12 @@ public class TestMain {
 //        y = 10 >> 2;
 //        System.out.println("y: " + y);
 //
-//        Map<String, String> map = getActionParams("ntalker://entrancetype=shop&shop_id=489");
+//        String params1 = "paycenter://1412475623,60;";//&sign_checkout=09e66d099039d5ccc3eb809d8a8901c5&is_oversea=0&is_ebook=0";
+//        String params2[] = params1.split(";&");
+//        System.out.println(params2[0]+";");
+//        System.out.println("&"+params2[1]);
+
+//        Map<String, String> map = getActionParams("paycenter://" + params2[1] );
 //        System.out.println(map);
 
 //        testInput();
@@ -58,9 +71,26 @@ public class TestMain {
 //
 //        System.out.println(Long.MAX_VALUE + "");
 
-        autoboxingTest();
+//        autoboxingTest();
+
+//        addSomeObj();
+
+//        testMath();
+
+        String action = "search://key=a&b&cid=123";
+        String[] actions = action.split("//");
+        System.out.println(actions[0] + "  " + actions[1]);
+
+        String [] keyid = actions[1].split("&");
+        String key = keyid[0];
+        System.out.println(key);
     }
 
+    public static void testMath() {
+//        for (int j = 0; j < 100; j++) {
+        System.out.println((int) ((Math.random() * 9 + 1) * 100000));
+//        }
+    }
 
     private static int calcArea(int height, int width) {
         return height * width;
@@ -104,6 +134,19 @@ public class TestMain {
         return actionParams;
     }
 
+    public static String parseMapParams(Map<String, String> map) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+
+            stringBuilder.append("&");
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append("=");
+            stringBuilder.append(entry.getValue());
+
+        }
+        return stringBuilder.toString();
+    }
+
     private static void testInput() {
 
         int cur = 1000;
@@ -135,5 +178,19 @@ public class TestMain {
 //    private void car(double a, double b) {
 //        (2 * a + 0.4 * b) * 0.5 - (1.3 * a + 0.3 * b-10)
 //    }
+
+    public static void addSomeObj() {
+        Person person = new Person("1");
+        List<Person> persons = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            persons.add(person);
+        }
+
+        System.out.println("psersons.size: " + persons.size());
+        persons.get(2).setName("2");
+        for (Person person1 : persons) {
+            System.out.println("person:" + person1);
+        }
+    }
 
 }
