@@ -77,13 +77,16 @@ public class TestMain {
 
 //        testMath();
 
-        String action = "search://key=a&b&cid=123";
-        String[] actions = action.split("//");
-        System.out.println(actions[0] + "  " + actions[1]);
+//        String action = "search://key=a&b&cid=123";
+//        String[] actions = action.split("//");
+//        System.out.println(actions[0] + "  " + actions[1]);
+//
+//        String [] keyid = actions[1].split("&");
+//        String key = keyid[0];
+//        System.out.println(key);
 
-        String [] keyid = actions[1].split("&");
-        String key = keyid[0];
-        System.out.println(key);
+        boolean noInvoice = "haha".equals("");
+        System.out.println("noInvoice = " + (noInvoice ? "无" : "haha"));
     }
 
     public static void testMath() {

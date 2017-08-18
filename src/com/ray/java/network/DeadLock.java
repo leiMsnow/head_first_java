@@ -7,6 +7,8 @@ public class DeadLock {
     public static final String res1 = "res1";
     public static final String res2 = "res2";
 
+    private static String abc = null;
+
     public static void main(String[] args) {
 
         Thread lock1 = new Thread(new Lock1());

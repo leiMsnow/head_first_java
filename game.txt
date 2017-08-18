@@ -1,0 +1,3 @@
+50,Elf,bowsworddust
+30,Troll,bare handsbig ax
+100,Magician,spellsinvisibility
